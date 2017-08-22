@@ -1,2 +1,2 @@
 # spring-boot-kotlin
-A Spring Boot Kotlin example
+A Spring Boot Kotlin example!
