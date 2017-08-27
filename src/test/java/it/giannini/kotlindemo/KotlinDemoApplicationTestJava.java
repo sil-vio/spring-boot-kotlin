@@ -10,8 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
+import reactor.core.publisher.Flux;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = it.giannini.kotlindemo.KotlinDemoApplication.class)
@@ -36,18 +38,26 @@ public class KotlinDemoApplicationTestJava {
 	@Test
 	public void postEntity() {
 
-		Transaction t =  new Transaction(null, 234.5F);
 
-		client.post()
+		float value = 234.5F;
+		Transaction t1 =  new Transaction(null, value);
+
+		 client.post()
                 .uri("transaction/")
-                .body(BodyInserters.fromObject(t))
+                .body(BodyInserters.fromObject(t1))
                 .exchange()
-                .expectStatus().isOk(); //.expectBody(Transaction.class).returnResult().getResponseBody();
+                .expectStatus().isCreated();
 
-		Assert.assertNotNull(t.getId());
-
-		System.out.println(client.get().uri("transaction/" + t.getId()).exchange()
-				.expectStatus().isOk().expectBody(Transaction.class).returnResult().getResponseBody());
+		client.get()
+				.uri("transaction/")
+				.exchange()
+				.expectStatus().isOk()
+				.expectBodyList(Transaction.class).hasSize(1)
+				.consumeWith(transactionList -> {
+					transactionList.getResponseBody()
+							.stream()
+							.forEach(transaction -> Assert.assertEquals(value, transaction.getValue(), 0F));
+				});
 
 	}
 
