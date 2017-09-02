@@ -17,51 +17,57 @@ import reactor.core.publisher.Flux;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(
-		classes = it.giannini.kotlindemo.KotlinDemoApplication.class,
-		webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+        classes = it.giannini.kotlindemo.KotlinDemoApplication.class,
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class KotlinDemoApplicationTestJava {
 
-	@Autowired
-	ApplicationContext context;
+    @Autowired
+    ApplicationContext context;
 
 
-	WebTestClient client;
+    WebTestClient client;
 
-	@Before
-	public void setup() {
-		client = WebTestClient
-				.bindToApplicationContext(context)
-				//.bindToServer()
-				//.webFilter(mutator)
-				.configureClient()
-				.baseUrl("http://localhost:8080/")
-				.build();
-	}
+    @Before
+    public void setup() {
+        client = WebTestClient
+                .bindToApplicationContext(context)
+                //.bindToServer()
+                //.webFilter(mutator)
+                .configureClient()
+                .baseUrl("http://localhost:8080/")
+                .build();
+    }
 
-	@Test
-	public void postEntity() {
+    @Test
+    public void postEntity() {
 
 
-		float value = 234.5F;
-		Transaction t1 =  new Transaction(null, value);
+        float value = 234.5F;
+        Transaction t1 = new Transaction(null, value);
 
-		 client.post()
+        client.post()
                 .uri("transaction/")
                 .body(BodyInserters.fromObject(t1))
                 .exchange()
                 .expectStatus().isCreated();
 
 		client.get()
-				.uri("transaction/")
-				.exchange()
-				.expectStatus().isOk()
-				.expectBodyList(Transaction.class).hasSize(1)
-				.consumeWith(transactionList -> {
-					transactionList.getResponseBody()
-							.stream()
-							.forEach(transaction -> Assert.assertEquals(value, transaction.getValue(), 0F));
-				});
+                .uri("events/")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(Transaction.class).hasSize(1);
 
-	}
+        client.get()
+                .uri("transaction/")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(Transaction.class).hasSize(1)
+                .consumeWith(transactionList -> {
+                    transactionList.getResponseBody()
+                            .stream()
+                            .forEach(transaction -> Assert.assertEquals(value, transaction.getValue(), 0F));
+                });
+
+    }
 
 }

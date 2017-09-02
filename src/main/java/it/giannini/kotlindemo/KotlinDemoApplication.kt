@@ -6,9 +6,9 @@ import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRep
 
 @SpringBootApplication
 @EnableReactiveMongoRepositories
-class KotlinDemoApplication {
+class KotlinDemoApplication
 
-    fun main(args: Array<String>) {
-        SpringApplication.run(KotlinDemoApplication::class.java, *args)
-    }
+
+fun main(args: Array<String>) {
+    SpringApplication.run(KotlinDemoApplication::class.java, *args)
 }

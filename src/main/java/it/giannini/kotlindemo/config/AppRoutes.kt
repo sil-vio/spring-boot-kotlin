@@ -4,6 +4,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository
+import org.springframework.http.MediaType
 import org.springframework.http.MediaType.APPLICATION_JSON
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
@@ -17,6 +18,8 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.publisher.toMono
 import java.net.URI
+import java.time.Duration
+import java.util.stream.Stream
 
 
 @Configuration
@@ -31,10 +34,16 @@ class AppRoutes(val transactionHandler: TransactionHandler) {
             GET("/{id}", transactionHandler::getById)
             //
             POST("/", transactionHandler::save)
+            //
+        }
+
+        (accept(APPLICATION_JSON) and("/events")).nest {
+            GET("/", transactionHandler::getEvents)
         }
 
     }
 }
+
 
 @Component
 class TransactionHandler(val transactionService: TransactionService) {
@@ -46,8 +55,13 @@ class TransactionHandler(val transactionService: TransactionService) {
             transactionService.get(request.pathVariable("id")).flatMap { t -> ServerResponse.ok().body(fromObject(t)) }
 
     fun getAll(request: ServerRequest): Mono<ServerResponse> =
-            ServerResponse.ok().body(bodyFromPublisher(transactionService.getAll()))
+            ServerResponse.ok().body(bodyFromPublisher(transactionService.getAll())).doOnSuccess { log.info("getAll ended!") }
 
+
+    fun getEvents(request: ServerRequest): Mono<ServerResponse> =
+            ServerResponse.ok()
+                        .contentType(MediaType.TEXT_EVENT_STREAM)
+                        .body(transactionService.events(), Transaction::class.java);
 
     fun save(request: ServerRequest): Mono<ServerResponse> =
             request
@@ -73,6 +87,13 @@ class TransactionService(val transactionRepository: TransactionRepository) {
 
     fun getAll(): Flux<Transaction> = transactionRepository.findAll();
 
+    fun events(): Flux<Transaction> {
+        return 500.toMono().flatMapMany { interval ->
+            val interval = Flux.interval(Duration.ofMillis(interval.toLong())).onBackpressureDrop()
+            val transactionEventFlux = Flux.fromStream<Transaction>(Stream.generate<Transaction> { Transaction("pippo", 24F) })
+            Flux.zip(interval, transactionEventFlux).map{ it.getT2() }
+        }
+    }
 
 }
 
