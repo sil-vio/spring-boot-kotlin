@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
 import org.springframework.test.web.reactive.server.WebTestClient
+import java.time.Instant
+import java.util.*
 
 
 @RunWith(SpringRunner::class)
@@ -31,7 +33,7 @@ class KotlinDemoApplicationTests {
     fun quandoChiamatoTornaPippo_V2() {
 
 
-        val t = Transaction(null,123.5F)
+        val t = Transaction(null,123.5F, Date.from(Instant.now()))
 
 //
 //        client.post()

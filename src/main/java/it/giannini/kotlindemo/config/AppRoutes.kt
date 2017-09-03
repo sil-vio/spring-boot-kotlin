@@ -19,6 +19,8 @@ import reactor.core.publisher.Mono
 import reactor.core.publisher.toMono
 import java.net.URI
 import java.time.Duration
+import java.time.Instant
+import java.util.*
 import java.util.stream.Stream
 
 
@@ -66,7 +68,9 @@ class TransactionHandler(val transactionService: TransactionService) {
     fun save(request: ServerRequest): Mono<ServerResponse> =
             request
                     .bodyToMono(Transaction::class.java)
-                    .flatMap { t: Transaction? -> transactionService.save(t) }
+                    .flatMap { t: Transaction? ->
+                            transactionService.save(Transaction(null, t?.value!!, Date.from(Instant.now())))
+                    }
                     .flatMap { t -> ServerResponse.created(URI.create("/" + t)).body(fromObject(t)) }
 }
 
@@ -88,16 +92,25 @@ class TransactionService(val transactionRepository: TransactionRepository) {
     fun getAll(): Flux<Transaction> = transactionRepository.findAll();
 
     fun events(): Flux<Transaction> {
-        return 500.toMono().flatMapMany { interval ->
-            val interval = Flux.interval(Duration.ofMillis(interval.toLong())).onBackpressureDrop()
-            val transactionEventFlux = Flux.fromStream<Transaction>(Stream.generate<Transaction> { Transaction("pippo", 24F) })
-            Flux.zip(interval, transactionEventFlux).map{ it.getT2() }
-        }
+        var date:Date = Date.from(Instant.now())
+//        return 500.toMono().flatMapMany { interval ->
+//            val interval = Flux.interval(Duration.ofMillis(interval.toLong())).onBackpressureDrop()
+            //val transactionEventFlux = Flux.fromStream<Transaction>(Stream.generate<Transaction> { Transaction("pippo", 24F, Date.from(Instant.now())) })
+            return Flux.interval(Duration.ofMillis(2000L)).flatMap { _ -> transactionRepository.findByDateGreaterThan(date).doOnComplete { date = Date.from(Instant.now()) } }
+//            Flux.zip(interval, transactionEventFlux).map{ it.getT2() }
+//        }
     }
 
 }
 
 @Repository
-interface TransactionRepository : ReactiveMongoRepository<Transaction, String>
+interface TransactionRepository : ReactiveMongoRepository<Transaction, String> {
 
-data class Transaction(val id: String?, val value: Float)
+    fun findByDateLessThan(date: Date): Flux<Transaction>
+
+    fun findByDateGreaterThan(date: Date): Flux<Transaction>
+
+
+}
+
+data class Transaction(val id: String?, val value: Float, val date: Date?)

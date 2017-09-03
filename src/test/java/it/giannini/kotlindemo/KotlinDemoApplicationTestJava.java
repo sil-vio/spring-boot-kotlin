@@ -15,6 +15,9 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Flux;
 
+import java.sql.Date;
+import java.time.Instant;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest(
         classes = it.giannini.kotlindemo.KotlinDemoApplication.class,
@@ -43,7 +46,7 @@ public class KotlinDemoApplicationTestJava {
 
 
         float value = 234.5F;
-        Transaction t1 = new Transaction(null, value);
+        Transaction t1 = new Transaction(null, value, Date.from(Instant.now()));
 
         client.post()
                 .uri("transaction/")
