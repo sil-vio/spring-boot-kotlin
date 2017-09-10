@@ -16,7 +16,9 @@ import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Flux;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = it.giannini.kotlindemo.KotlinDemoApplication.class)
+@SpringBootTest(
+		classes = it.giannini.kotlindemo.KotlinDemoApplication.class,
+		webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class KotlinDemoApplicationTestJava {
 
 	@Autowired
@@ -28,9 +30,10 @@ public class KotlinDemoApplicationTestJava {
 	@Before
 	public void setup() {
 		client = WebTestClient
-				.bindToServer()
+				.bindToApplicationContext(context)
+				//.bindToServer()
 				//.webFilter(mutator)
-				//.configureClient()
+				.configureClient()
 				.baseUrl("http://localhost:8080/")
 				.build();
 	}
