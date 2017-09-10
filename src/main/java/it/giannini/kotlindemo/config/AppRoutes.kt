@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository
 import org.springframework.http.MediaType
 import org.springframework.http.MediaType.APPLICATION_JSON
+import org.springframework.http.MediaType.TEXT_EVENT_STREAM
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
 import org.springframework.stereotype.Service
@@ -16,12 +17,10 @@ import org.springframework.web.reactive.function.server.ServerResponse
 import org.springframework.web.reactive.function.server.router
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import reactor.core.publisher.toMono
 import java.net.URI
 import java.time.Duration
 import java.time.Instant
 import java.util.*
-import java.util.stream.Stream
 
 
 @Configuration
@@ -39,7 +38,7 @@ class AppRoutes(val transactionHandler: TransactionHandler) {
             //
         }
 
-        (accept(APPLICATION_JSON) and("/events")).nest {
+        (accept(TEXT_EVENT_STREAM) and("/events")).nest {
             GET("/", transactionHandler::getEvents)
         }
 

@@ -17,6 +17,8 @@ import reactor.core.publisher.Flux;
 
 import java.sql.Date;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(
@@ -54,7 +56,7 @@ public class KotlinDemoApplicationTestJava {
                 .exchange()
                 .expectStatus().isCreated();
 
-		client.get()
+        client.get()
                 .uri("events/")
                 .exchange()
                 .expectStatus().isOk()
@@ -73,4 +75,69 @@ public class KotlinDemoApplicationTestJava {
 
     }
 
+
+    @Test
+    public void flatMap() {
+        List<ClasseA> listaA = new ArrayList<>();
+        ClasseA classeA = new ClasseA();
+        classeA.setName("LISTA_A");
+        List<ClasseB> sottoLista = new ArrayList<>();
+        ClasseB classeB = new ClasseB();
+        String CF = "GNNSLV81P18D612C";
+        classeB.setCf(CF);
+        sottoLista.add(classeB);
+        classeA.setLista(sottoLista);
+        listaA.add(classeA);
+
+        String stringa =
+                listaA
+                        .stream()
+                        .flatMap(classeA1 -> classeA1.getLista().stream())
+                        .filter(classeB1 -> classeB1.getCf().compareToIgnoreCase(CF) == 0)
+                        .map(classeB1 -> new String(classeB1.getCf()))
+                        .findAny()
+                        .orElse("");
+
+        Assert.assertEquals(stringa, CF);
+
+    }
+
+
+}
+
+class ClasseA {
+
+    private String name;
+
+    private List<ClasseB> lista;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public List<ClasseB> getLista() {
+        return lista;
+    }
+
+    public void setLista(List<ClasseB> lista) {
+        this.lista = lista;
+    }
+}
+
+
+class ClasseB {
+
+    private String cf;
+
+    public String getCf() {
+        return cf;
+    }
+
+    public void setCf(String cf) {
+        this.cf = cf;
+    }
 }
